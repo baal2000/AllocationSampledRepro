@@ -18,6 +18,9 @@ on:
   push:
   pull_request:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   confirm:
     name: Confirm issue + workaround (.NET 10)
@@ -33,8 +36,6 @@ jobs:
 
       - name: Restore
         run: dotnet restore
-        working-directory: AllocationSampledRepro
 
       - name: Run repro
         run: dotnet run --no-restore
-        working-directory: AllocationSampledRepro
