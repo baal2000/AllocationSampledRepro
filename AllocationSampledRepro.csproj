@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- TraceEvent 3.1.30 — latest as of this repro; does not decode EventID 303 -->
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.30" />
+    <!-- DiagnosticsClient — used to self-instrument and capture the trace -->
+    <PackageReference Include="Microsoft.Diagnostics.NETCore.Client" Version="0.2.532401" />
+  </ItemGroup>
+
+</Project>
