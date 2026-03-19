@@ -47,11 +47,11 @@ The program runs in three phases:
 ══ Raw EventData() workaround (works) ══════════════════════════════════
   [1] TypeName=System.Reflection.RuntimeMethodInfo  ObjectSize=104 bytes
   ...
-  Total events decoded via raw bytes: 78 / 78
+  Total events decoded via raw bytes: 100% (N / N)
 
 CI: PASS
   [1] Issue confirmed   — PayloadNames empty, Clr.All: 0 hits for EventID 303
-  [2] Workaround confirmed — raw bytes decoded 78/78 events
+  [2] Workaround confirmed — raw bytes decoded 100% of sampled events
 ```
 
 (Event count and types vary per run; the CI workflow verifies both assertions on every push.)

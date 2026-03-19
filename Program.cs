@@ -124,7 +124,8 @@ using (var source = new EventPipeEventSource(traceFile))
     source.Process();
 }
 
-Console.WriteLine($"  Total events decoded via raw bytes: {rawDecoded} / {nativeSeen}");
+int pct = nativeSeen > 0 ? rawDecoded * 100 / nativeSeen : 0;
+Console.WriteLine($"  Total events decoded via raw bytes: {pct}% ({rawDecoded} / {nativeSeen})");
 
 Console.WriteLine();
 
@@ -157,8 +158,8 @@ if (!workaroundConfirmed)
 
 Console.WriteLine(
     "CI: PASS\n" +
-    "  [1] Issue confirmed   — PayloadNames null, Clr.All: 0 hits for EventID 303\n" +
-    $"  [2] Workaround confirmed — raw bytes decoded {rawDecoded}/{nativeSeen} events");
+    "  [1] Issue confirmed   — PayloadNames empty, Clr.All: 0 hits for EventID 303\n" +
+    $"  [2] Workaround confirmed — raw bytes decoded {pct}% of sampled events");
 File.Delete(traceFile);
 return 0;
 
