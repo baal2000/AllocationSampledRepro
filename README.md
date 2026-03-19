@@ -1,7 +1,6 @@
 # AllocationSampledRepro
 
-Minimal self-contained repro for the missing `AllocationSampled` (EventID 303) typed schema in
-`Microsoft.Diagnostics.Tracing.TraceEvent` 3.1.30.
+Minimal self-contained repro for [microsoft/perfview#2385](https://github.com/microsoft/perfview/issues/2385) — missing `AllocationSampled` (EventID 303) typed schema in `Microsoft.Diagnostics.Tracing.TraceEvent` 3.1.30.
 
 ## Requirements
 
