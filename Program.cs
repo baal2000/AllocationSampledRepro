@@ -5,7 +5,8 @@
 //
 // What this shows:
 //   1. Generate a live .nettrace with AllocationSamplingKeyword on .NET 10.
-//   2. Parse via the native TraceEvent API  → PayloadNames is null, PayloadByName returns null.
+//   2. Parse via the native TraceEvent API  → PayloadNames is an empty array, PayloadByName
+//      returns null, PayloadValue(0) returns a sentinel error string.
 //   3. Parse via raw EventData() bytes      → TypeName and ObjectSize decoded successfully.
 
 using System.Diagnostics.Tracing;
