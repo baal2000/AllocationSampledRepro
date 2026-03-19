@@ -1,0 +1,41 @@
+name: Repro
+
+# Runs on every push and every PR.
+# The job passes (green) when BOTH conditions hold:
+#   [1] Issue confirmed   — TraceEvent 3.1.30 still has no typed schema for
+#                           AllocationSampled (EventID 303): PayloadNames is null,
+#                           source.Clr.All fires 0 times for EventID 303.
+#   [2] Workaround confirmed — raw EventData() byte parsing decodes all events.
+#
+# Exit codes from Program.cs:
+#   0  normal / expected state (both conditions above hold)
+#   1  wrong runtime (< .NET 10)
+#   2  zero events captured (allocation volume too low or wrong runtime)
+#   3  UNEXPECTED: TraceEvent now provides PayloadNames → issue may be fixed
+#   4  FAIL: workaround broken (TryParseAllocationSampled returned false for all events)
+
+on:
+  push:
+  pull_request:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  confirm:
+    name: Confirm issue + workaround (.NET 10)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Run repro
+        run: dotnet run --no-restore

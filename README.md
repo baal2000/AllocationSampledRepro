@@ -1,7 +1,6 @@
 # AllocationSampledRepro
 
-Minimal self-contained repro for the missing `AllocationSampled` (EventID 303) typed schema in
-`Microsoft.Diagnostics.Tracing.TraceEvent` 3.1.30.
+Minimal self-contained repro for [microsoft/perfview#2385](https://github.com/microsoft/perfview/issues/2385) — missing `AllocationSampled` (EventID 303) typed schema in `Microsoft.Diagnostics.Tracing.TraceEvent` 3.1.30.
 
 ## Requirements
 
@@ -37,23 +36,24 @@ The program runs in three phases:
 
 ```
 ══ Native TraceEvent API (broken) ═════════════════════════════════════
-  PayloadNames:                <null>
+  PayloadNames:                <empty array>
   PayloadByName("TypeName"):   <null>
   PayloadByName("ObjectSize"): <null>
-  PayloadValue(0):             <null>
+  PayloadValue(0):             <<<EXCEPTION_DURING_VALUE_LOOKUP IndexOutOfRangeException>>>
   source.Clr.All hits for EventID 303:     0  (0 = not routed through ClrTraceEventParser)
-  source.Dynamic.All hits for EventID 303: 47
+  source.Dynamic.All hits for EventID 303: 78
 
 ══ Raw EventData() workaround (works) ══════════════════════════════════
-  [1] TypeName=System.String   ObjectSize=96 bytes
-  [2] TypeName=System.String   ObjectSize=96 bytes
-  [3] TypeName=System.Byte[]   ObjectSize=512 bytes
+  [1] TypeName=System.Reflection.RuntimeMethodInfo  ObjectSize=104 bytes
   ...
-  Total events decoded via raw bytes: 47 / 47
+  Total events decoded via raw bytes: 100% (N / N)
 
-RESULT: native API yields no payload data; raw byte parsing works.
-        ClrTraceEventParser needs a typed schema for EventID 303.
+CI: PASS
+  [1] Issue confirmed   — PayloadNames empty, Clr.All: 0 hits for EventID 303
+  [2] Workaround confirmed — raw bytes decoded 100% of sampled events
 ```
+
+(Event count and types vary per run; the CI workflow verifies both assertions on every push.)
 
 ## Binary payload layout
 

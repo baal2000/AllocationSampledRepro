@@ -5,7 +5,8 @@
 //
 // What this shows:
 //   1. Generate a live .nettrace with AllocationSamplingKeyword on .NET 10.
-//   2. Parse via the native TraceEvent API  → PayloadNames is null, PayloadByName returns null.
+//   2. Parse via the native TraceEvent API  → PayloadNames is an empty array, PayloadByName
+//      returns null, PayloadValue(0) returns a sentinel error string.
 //   3. Parse via raw EventData() bytes      → TypeName and ObjectSize decoded successfully.
 
 using System.Diagnostics.Tracing;
@@ -58,8 +59,9 @@ Console.WriteLine("Trace captured.\n");
 // ── Step 2: Parse via native TraceEvent API (broken) ───────────────────────
 
 Console.WriteLine("══ Native TraceEvent API (broken) ═════════════════════════════════════");
-int nativeSeen  = 0;
-int clrTypedSeen = 0;
+int  nativeSeen        = 0;
+int  clrTypedSeen      = 0;
+bool nativeSchemaAbsent = true; // flipped to false if TraceEvent provides PayloadNames
 
 using (var source = new EventPipeEventSource(traceFile))
 {
@@ -76,6 +78,7 @@ using (var source = new EventPipeEventSource(traceFile))
         if (nativeSeen++ > 0) return; // Print only the first event for brevity
 
         var names = data.PayloadNames;
+        nativeSchemaAbsent = names is null || names.Length == 0;
         Console.WriteLine($"  PayloadNames:                {FormatNames(names)}");
         Console.WriteLine($"  PayloadByName(\"TypeName\"):   {data.PayloadByName("TypeName") ?? "<null>"}");
         Console.WriteLine($"  PayloadByName(\"ObjectSize\"): {data.PayloadByName("ObjectSize") ?? "<null>"}");
@@ -121,15 +124,42 @@ using (var source = new EventPipeEventSource(traceFile))
     source.Process();
 }
 
-Console.WriteLine($"  Total events decoded via raw bytes: {rawDecoded} / {nativeSeen}");
+int pct = nativeSeen > 0 ? rawDecoded * 100 / nativeSeen : 0;
+Console.WriteLine($"  Total events decoded via raw bytes: {pct}% ({rawDecoded} / {nativeSeen})");
 
 Console.WriteLine();
-if (rawDecoded > 0)
-    Console.WriteLine("RESULT: native API yields no payload data; raw byte parsing works.\n" +
-                      "        ClrTraceEventParser needs a typed schema for EventID 303.");
-else
-    Console.WriteLine("RESULT: raw byte parser also failed — allocation volume may need to increase.");
 
+// ── CI assertions ─────────────────────────────────────────────────────────────
+// Exit 0  = issue confirmed (PayloadNames null, Clr.All 0 hits)
+//         + workaround confirmed (raw bytes decoded events)    ← expected/normal
+// Exit 3  = issue NOT confirmed — TraceEvent may now have a typed schema
+// Exit 4  = workaround FAILED — raw byte parsing decoded 0 events
+bool issueConfirmed      = nativeSchemaAbsent && clrTypedSeen == 0;
+bool workaroundConfirmed = rawDecoded > 0;
+
+if (!issueConfirmed)
+{
+    Console.Error.WriteLine(
+        "CI: UNEXPECTED — TraceEvent appears to provide PayloadNames for AllocationSampled " +
+        "(EventID 303). If ClrTraceEventParser gained a typed schema, migrate to native " +
+        "PayloadByName/PayloadValue and close this issue.");
+    File.Delete(traceFile);
+    return 3;
+}
+
+if (!workaroundConfirmed)
+{
+    Console.Error.WriteLine(
+        "CI: FAIL — raw byte workaround decoded 0 events. " +
+        "Payload layout may have changed; check TryParseAllocationSampled.");
+    File.Delete(traceFile);
+    return 4;
+}
+
+Console.WriteLine(
+    "CI: PASS\n" +
+    "  [1] Issue confirmed   — PayloadNames empty, Clr.All: 0 hits for EventID 303\n" +
+    $"  [2] Workaround confirmed — raw bytes decoded {pct}% of sampled events");
 File.Delete(traceFile);
 return 0;
 
